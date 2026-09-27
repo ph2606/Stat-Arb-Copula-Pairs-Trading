@@ -1,0 +1,122 @@
+[
+  {
+    "method": "Selected",
+    "pair": "AAPL-GOOG",
+    "first_nonpositive_equity": "2013-08-13",
+    "minimum_equity_per_initial_dollar": -0.970789443882129
+  },
+  {
+    "method": "Selected",
+    "pair": "IBM-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.3737584154269875
+  },
+  {
+    "method": "Selected",
+    "pair": "DIA-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.35538597504959624
+  },
+  {
+    "method": "Selected",
+    "pair": "Portfolio",
+    "first_nonpositive_equity": "2024-09-06",
+    "minimum_equity_per_initial_dollar": -0.030326252049491464
+  },
+  {
+    "method": "Best-single",
+    "pair": "AAPL-GOOG",
+    "first_nonpositive_equity": "2013-05-15",
+    "minimum_equity_per_initial_dollar": -1.1487081344625154
+  },
+  {
+    "method": "Best-single",
+    "pair": "IBM-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.19320560077323046
+  },
+  {
+    "method": "Best-single",
+    "pair": "DIA-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.34704821995826796
+  },
+  {
+    "method": "Best-single",
+    "pair": "Portfolio",
+    "first_nonpositive_equity": "2024-04-01",
+    "minimum_equity_per_initial_dollar": -0.12611320014170335
+  },
+  {
+    "method": "BIC",
+    "pair": "AAPL-GOOG",
+    "first_nonpositive_equity": "2013-07-26",
+    "minimum_equity_per_initial_dollar": -1.164412320824649
+  },
+  {
+    "method": "BIC",
+    "pair": "IBM-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.16798725544848947
+  },
+  {
+    "method": "BIC",
+    "pair": "DIA-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.35064451617272396
+  },
+  {
+    "method": "BIC",
+    "pair": "Portfolio",
+    "first_nonpositive_equity": "2024-04-01",
+    "minimum_equity_per_initial_dollar": -0.13855527863250958
+  },
+  {
+    "method": "Distance",
+    "pair": "AAPL-GOOG",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.025863902977299014
+  },
+  {
+    "method": "Distance",
+    "pair": "IBM-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.7717546007621314
+  },
+  {
+    "method": "Distance",
+    "pair": "DIA-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.7124928943430797
+  },
+  {
+    "method": "Distance",
+    "pair": "Portfolio",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.6275651454064511
+  },
+  {
+    "method": "Cointegration",
+    "pair": "AAPL-GOOG",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.9850632671201529
+  },
+  {
+    "method": "Cointegration",
+    "pair": "IBM-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.8931020962923466
+  },
+  {
+    "method": "Cointegration",
+    "pair": "DIA-SPY",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 1.0
+  },
+  {
+    "method": "Cointegration",
+    "pair": "Portfolio",
+    "first_nonpositive_equity": null,
+    "minimum_equity_per_initial_dollar": 0.9775520823379183
+  }
+]

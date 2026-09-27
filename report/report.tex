@@ -1,0 +1,182 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Cambria}{\setmainfont[Ligatures=NoCommon]{Cambria}}{\setmainfont{Latin Modern Roman}}
+\IfFontExistsTF{Calibri}{\setsansfont{Calibri}}{\setsansfont{Latin Modern Sans}}
+\usepackage{amsmath,amssymb,booktabs,graphicx,xcolor,tabularx,fancyhdr,array}
+\definecolor{navy}{HTML}{18354A}
+\definecolor{teal}{HTML}{167D8D}
+\definecolor{pale}{HTML}{EDF5F6}
+\definecolor{muted}{HTML}{576C7B}
+\usepackage[colorlinks=true,urlcolor=teal,linkcolor=teal]{hyperref}
+\hypersetup{pdftitle={The Profitability of Pairs Trading Strategies Using Copula Methods},pdfauthor={Panagiotis Housos}}
+\setlength{\parindent}{0pt}\setlength{\parskip}{5pt}
+\setlength{\headheight}{15pt}\setlength{\emergencystretch}{3em}
+\renewcommand{\arraystretch}{1.12}\setlength{\tabcolsep}{4pt}
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\small\sffamily\color{muted}Copula Pairs Trading}
+\fancyhead[R]{\small\sffamily Panagiotis Housos · ph2606}
+\fancyfoot[L]{\small\sffamily\color{muted}Statistical Arbitrage · Fall 2026}
+\fancyfoot[R]{\small\sffamily\thepage}
+\newcommand{\exhibit}[3][0.96]{\begin{center}\includegraphics[width=#1\linewidth]{figures/#2.pdf}\end{center}\vspace{-7pt}{\small\color{muted}#3\par}}
+\newcommand{\resulttable}[2]{\textbf{#1}\begin{center}\small\input{tables/#2.tex}\end{center}}
+\input{numbers.tex}
+\begin{document}
+\thispagestyle{empty}
+{\sffamily\color{teal}\large NYU · STATISTICAL ARBITRAGE\par}
+\vspace{22pt}
+{\sffamily\color{navy}\fontsize{31}{35}\selectfont\bfseries The Profitability of\\Pairs Trading Strategies\\Using Copula Methods\par}
+\vspace{14pt}
+{\large Panagiotis Housos · ph2606\par}
+{\color{muted}Fall 2026 · Python reproduction · Data retrieved 26 September 2026\par}
+\vspace{14pt}{\color{teal}\hrule height 1.5pt}\vspace{16pt}
+{\sffamily\large\bfseries Does a better dependence model produce better trades?\par}
+I reproduce the first paper's mixed-copula modeling procedure on all three suggested pairs and implement the second paper's marked-to-market PnL and capital measures. The analysis uses 40 out-of-sample trading windows from 2006 through 2025, with 12 months of formation data before each six-month window.
+
+\vspace{7pt}
+\colorbox{pale}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{\vspace{7pt}
+\textbf{Principal finding.} At five basis points per leg per fill, the selected-copula strategy has annualized arithmetic PnL of \textbf{\SelectedAnnual\%} of initial committed capital, versus \DistanceAnnual\% for distance and \SingleAnnual\% for the best single copula. Its annualized Sharpe ratio is \SelectedSharpe. All three selected-copula pairs lose money before costs as well as after costs. Better in-sample fit does not establish a profitable trading rule.\vspace{7pt}}}
+
+\vspace{10pt}
+\textbf{Capital matters.} The paper-style fixed-stake experiment exhausts the AAPL--GOOG sleeve in August 2013 and aggregate capital in September 2024. Its subsequent PnL is an uncapped diagnostic that would require additional funding. A separate account that sizes each new trade from available equity loses \textbf{63.07\%} over the sample, with \textbf{−4.87\% CAGR}; this avoids interpreting unfunded continuation as investable wealth.
+
+\textbf{What is reproduced.} Seven copula families, ARMA--GARCH marginals, likelihood and BIC model selection, cumulative mispricing signals, distance and screened cointegration controls, gross/net PnL, committed/employed capital, cost and threshold sensitivities, and subperiod comparisons.
+
+\textbf{What this establishes.} A complete small-universe implementation and an empirical counterexample to assuming that greater model flexibility ensures profitability. It is not a numerical replication of the papers' historical S\&P~500 or CRSP-universe results.
+\vfill
+\textbf{Companion files:} executed \texttt{copula\_pairs\_trading.ipynb}, Python modules and tests, daily/trade ledgers, input manifest and reproducibility instructions. The supplied papers are the primary methodological sources.
+
+\clearpage
+\section{Data, sample construction and quality control}
+Daily prices come from Yahoo Finance through \texttt{yfinance 1.3.0}, with \texttt{auto\_adjust=False}, \texttt{repair=False}, and corporate-action fields retained. I use the supplied adjusted close as a total-return mark. The request begins on 1 December 2004 and ends exclusively on 1 January 2026. The extra December prices supply the lag needed for January 2005 formation returns. Every symbol has the same 5,305 observed dates, no duplicate dates, and positive finite adjusted closes. No prices are interpolated or forward-filled.
+
+\resulttable{Table 1. Retrieved daily coverage and recorded corporate-action events.}{coverage}
+The evaluation contains \OOSDays\ common trading dates, 3 January 2006--31 December 2025. Five unique assets require 200 marginal fits; three pairs across 40 windows produce 120 dependence experiments and 840 candidate copula fits. All selected marginal fits and retained copula candidates satisfy their optimizer's convergence criterion. Convergence is a numerical diagnostic, not a proof of global optimality.
+
+The five local CSVs and \texttt{data\_manifest.json} preserve retrieval time, exact request bounds, row counts, event counts and SHA-256 hashes. Analysis refuses an input hash mismatch. Formation caches are matched to the raw data and marginal/copula source hashes. Dependency versions are pinned. No Bloomberg or WRDS credentials were available or needed for these permitted Yahoo examples.
+
+Adjusted marks incorporate the provider's treatment of splits and distributions. They are not prices at which fractional synthetic total-return units can literally be traded. The accounting assumes reinvested distributions for the long total-return leg and the corresponding short liability; adding the dividend column again would double count it. The GOOG series and IBM corporate actions are used as supplied, without reconstructing historical security identifiers. Revised vendor data and present-day pair selection remain limitations.
+
+The context plot shows that the pairs are economically different: AAPL--GOOG combines individual stocks, IBM--SPY combines a stock and a broad-market ETF, and DIA--SPY compares two overlapping index exposures. High return correlation does not imply a stationary price spread. Correlations and plots using the entire evaluation sample are descriptive only and never enter model selection.
+
+{\small Sources: \href{https://finance.yahoo.com/quote/AAPL/history/}{Yahoo AAPL}, \href{https://finance.yahoo.com/quote/GOOG/history/}{GOOG}, \href{https://finance.yahoo.com/quote/IBM/history/}{IBM}, \href{https://finance.yahoo.com/quote/DIA/history/}{DIA}, \href{https://finance.yahoo.com/quote/SPY/history/}{SPY}; \href{https://ranaroussi.github.io/yfinance/reference/yfinance.stock.html}{yfinance documentation}.}
+
+\clearpage
+\exhibit{context}{Figure 1. Adjusted-price indices and contemporaneous log-return relationships. Normalization is descriptive; these full-sample plots are not used to fit the trading models.}
+
+\input{methodology.tex}
+
+\clearpage
+\section{Dependence fit versus economic performance}
+\exhibit[0.98]{dependence}{Figure 2. Formation pseudo-observations for the January 2025 trading window. These are filtered return ranks, not price-level spreads. The model is estimated before that window begins.}
+\exhibit[0.98]{model_selection}{Figure 3. Family selection across the 40 formation windows for each pair: maximum likelihood versus minimum BIC.}
+Mixtures win \MixtureShare\% of all 120 maximum-likelihood comparisons: CFG wins 25, CtG wins 93, and Student-$t$ wins two. In contrast, BIC selects no mixtures. This sharp difference is expected when one criterion rewards every likelihood improvement and the other penalizes five or six parameters instead of one or two. It does not demonstrate that BIC is universally correct, but it weakens an interpretation of the mixture frequency as independent evidence of superior predictive power.
+
+Clayton permits lower-tail dependence, Gumbel upper-tail dependence, and Student-$t$ symmetric tail dependence; Frank and Gaussian can describe central dependence without asymptotic tail dependence. Mixing these components allows more shapes. The question for trading is whether the resulting conditional-rank signals predict subsequent relative price reversals strongly enough to cover risk and turnover.
+
+\clearpage
+\section{Out-of-sample PnL on the three suggested pairs}
+\resulttable{Table 2. Selected copula: fixed-stake PnL statistics, 2006--2025.}{pairs}
+\textbf{Units.} ``Per year'' is $252\bar r$, an annualized arithmetic daily PnL/initial-capital measure, not CAGR. ``Net total'' sums daily PnL divided by the initial \$100,000 stake. Sharpe is $\sqrt{252}\bar r/s_r$, using sample standard deviation and zero cash return. No separate observed risk-free series is subtracted.
+
+\textbf{MDD* is diagnostic.} Here it is calculated from the algebraic account $E_t=1+\sum_{s\leq t}r_s$, including initial equity in its running maximum. Once $E_t\leq0$, this is no longer an investable wealth path. Values beyond 100\% expose the funding failure; they are not a claim that an account can continue with negative capital. Funded-account drawdowns are reported separately in Table~7.
+
+\exhibit{pair_equity}{Figure 4. Uncapped fixed-stake cumulative PnL by pair. The red line marks exhaustion of one initial stake. Continued trading below it requires additional funding.}
+AAPL--GOOG contributes the largest absolute loss: \AAPLTotal\% of its original stake. IBM--SPY and DIA--SPY also lose, at annualized net PnL rates of \IBMAnnual\% and \DIAAnnual\%. The small-spread ETF pair does not escape the cost problem, and its gross PnL is already negative.
+
+\clearpage
+\section{Benchmarks and capital denominators}
+\resulttable{Table 3. Equal initial allocations to all three pairs; primary five-basis-point costs.}{portfolio}
+The selected method generates \SelectedTrades\ completed trades, versus only 69 for distance and nine for cointegration. Cointegration passes the formation screen in two AAPL--GOOG windows, four IBM--SPY windows and no DIA--SPY windows. Its small positive portfolio mean is based on very sparse exposure, not a risk-matched demonstration of superiority. Failed screens leave cash in the nominated slot.
+
+\resulttable{Table 4. Monthly means on committed and employed capital.}{monthly}
+RCC includes all three capital slots every month. REC divides by the number actually used and omits months with none; therefore a large REC for sparse cointegration trading cannot be interpreted as a return on capital committed throughout the sample. The two SPY sleeves are separate and incur separate fees; a broker-level netting implementation could differ.
+
+The HAC tests regress monthly RCC on a constant with six monthly Newey--West lags. This is a declared inference choice, distinct from Paper~1's daily six-lag calculation. The selected method's mean is negative, with a two-sided HAC $p$-value of 0.016. Dependence, specification comparisons, and the prescribed small universe prevent a broad claim about every copula strategy.
+
+\clearpage
+\exhibit{portfolio_equity}{Figure 5. Portfolio gross and net uncapped PnL. Cost drag is material, but gross losses rule out the claim that zero commissions alone would make the selected specification profitable.}
+\resulttable{Table 5. Selected-copula trade characteristics.}{trades}
+Winning-trade frequency and convergence frequency are different quantities. AAPL--GOOG wins about 58\% of its trades yet loses heavily overall; small gains do not compensate for adverse trades. ``Converged'' refers to the signal exit, and the remaining trades are force-closed at the predetermined window end.
+
+The break-even fee solves $\sum r_t^{\rm gross}-c\sum\mathrm{turnover}_t=0$. A negative reported value means \emph{no nonnegative fee permits break-even}; it is the size of a hypothetical rebate, not an available execution quote. All three selected pairs have negative values.
+
+\clearpage
+\section{A worked signal and PnL example}
+\exhibit{signal_example}{Figure 6. AAPL--GOOG during January--June 2020. Flags generate targets; shaded positions follow next-close execution. This is a fixed, illustrative period, not a parameter-selection exercise.}
+For the first completed trade in this window, the strategy enters long AAPL and short GOOG on 8 January 2020 and exits on 10 January. At adjusted entry marks 72.954903 and 69.557182, a \$100,000 stake gives approximately 1,370.7098 AAPL total-return units and −1,437.6661 GOOG units. Exit marks are 74.672974 and 70.815765. Thus
+\begin{align*}
+ \mathrm{gross\ PnL}
+ &=100{,}000\left(\frac{74.672974}{72.954903}-\frac{70.815765}{69.557182}\right)
+ \simeq \$545.55,\\
+ \mathrm{entry\ cost}&=0.0005(100{,}000+100{,}000)=\$100.00,\\
+ \mathrm{exit\ cost}&\simeq\$102.08,\qquad
+ \mathrm{net\ PnL}=\$343.47.
+\end{align*}
+The entry-date price change is not credited to this new position. Costs use marked exit notional, so they need not equal entry costs. The complete trade ledger and daily ledger agree to less than $10^{-6}$ dollars across every method and pair; the actual largest discrepancy is below $6\times10^{-11}$ dollars.
+
+\clearpage
+\section{Costs, borrowing and the exit ambiguity}
+\exhibit{cost_sensitivity}{Figure 7. Annualized arithmetic portfolio PnL under predetermined per-fill costs; signals and holdings are unchanged.}
+\resulttable{Table 6. Annualized portfolio PnL (\% of initial capital), by transaction cost.}{costs}
+The selected portfolio loses 3.14\% per year before fees, 4.95\% at five basis points per fill, and 8.38\% at 14.5 basis points. Five-basis-point costs subtract 1.80 percentage points per year. Commission reduction improves an already negative outcome; it does not create a profitable baseline.
+
+\textbf{Additional stock-borrow scenarios.} The following values retain five-basis-point transaction costs and charge short marked notional at the stated annual rate divided by 252 for every held trading interval. This is a scenario convention, not a reconstructed calendar-day lending bill or a claim about historical availability.
+\begin{center}\small\input{tables/borrow.tex}\end{center}
+
+\clearpage
+\exhibit{threshold_sensitivity}{Figure 8. Predetermined entry-threshold grid, with ``either'' and simultaneous ``both'' zero-crossing exits. Model fitting is identical across variants.}
+\begin{center}\small\input{tables/thresholds.tex}\end{center}
+At the primary 0.20 threshold, requiring both flags reduces the trade count from 537 to 287 but worsens portfolio annualized net PnL from −4.95\% to −5.45\%. Every portfolio variant in the displayed grid loses. This does not justify selecting the least negative threshold after observing the results; 0.20 remains the baseline taken from Paper~1.
+
+\clearpage
+\section{A separate account sized from available equity}
+Fixed \$100,000 stakes become economically infeasible when losses consume the allocated cash. AAPL--GOOG's uncapped selected strategy first reaches nonpositive equity on \textbf{13 August 2013}; aggregate uncapped equity first does so on \textbf{6 September 2024}. Keeping the research PnL running thereafter is useful for comparing identical constant notionals, but it requires external capital. Its final aggregate loss of \SelectedTotal\% does not undo the earlier insolvency.
+
+For an additional accounting experiment, each pair starts with \$100,000 and a new trade's long-side stake equals that sleeve's available equity just before entry. The short stake follows the original equal-dollar or cointegration rule. Units stay fixed within the trade. With proportional costs, multiply the original unit-stake daily PnL path for that trade by its entry equity. This is causal and changes position sizing only; it does not change the copula, threshold, or signal sequence. All computed daily sleeve balances remain positive in this sample.
+
+\resulttable{Table 7. Equity-sized accounts, initially \$300,000 across three independent sleeves.}{funding}
+Here daily returns divide by previous equity, total return is final wealth/initial wealth minus one, CAGR is $(E_T/E_0)^{252/T}-1$, and drawdown uses actual modeled positive equity. Profits and losses are reinvested only at the next entry; there is no daily equal-dollar rebalance or reallocation among sleeves. The selected portfolio ends near \$110,804, a 63.07\% loss, versus a 30.21\% loss for distance.
+
+This sizing rule is an extension, not the papers' fixed initial-capital return convention. It also does not model a broker's maintenance-margin or margin-call process. Gross exposure starts at twice entry equity for equal-dollar pairs and can drift higher relative to remaining equity within a trade. Exact financing, short availability and liquidation constraints would require additional market inputs.
+
+\section{Subperiods and uncertainty}
+\resulttable{Table 8. Annualized arithmetic net PnL (\%) on fixed initial capital.}{periods}
+Selected copulas have positive sample PnL in 2007--2009 and 2020, but lose over each of the two ten-year blocks and during 2022. These are descriptive slices, not proof that a volatility regime predicts profitability. The crisis-year results are not used to refit the baseline or choose thresholds.
+
+\clearpage
+\resulttable{Table 9. Paired differences in monthly RCC; circular moving-block bootstrap.}{bootstrap}
+The selected method loses less than best-single and BIC by approximately 5.75 and 6.27 basis points per month. Both 95\% intervals contain zero. The selected-minus-distance interval also contains zero. Hence this sample does not establish a statistically clear improvement over these controls by this bootstrap criterion.
+
+Intervals use 5,000 circular moving-block resamples of the \emph{paired} monthly differences, a fixed six-month block, and random seed 2606. This preserves short-run serial dependence and simultaneous strategy comparison. It is not Paper~1's stationary bootstrap with automatically selected block length, and it is not adjusted for the many specifications examined. Tables and sensitivities are research diagnostics rather than a search for a deployable winner.
+
+\section{Interpretation, limitations and assignment coverage}
+Paper~1 reports a 3.68\% annualized net return on committed capital and 0.58 Sharpe for its value-weighted top-five mixed-copula portfolio, versus 2.30\% and 0.28 for distance (supplied PDF, pp.~2 and 15). Paper~2 reports mean monthly employed-capital returns after costs of 38, 33 and 5 basis points for distance, cointegration and copula respectively (p.~10, Table~3). Those published figures concern different universes, periods, weighting and execution. They are source findings, not outputs reproduced by these three pairs.
+
+The experiment reproduces the first paper's central model families and signal construction and the second paper's PnL denominators. It extends the comparison to all seven fitted families individually, best-single and BIC selection, distance, screened cointegration, 11 entry thresholds, two exit rules, six fee levels, three borrow rates, and five reporting subperiods. The negative findings are retained.
+
+Several limits remain. The three pairs are prescribed survivors rather than SSD-selected point-in-time constituents. ETF overlap and stock-specific risk matter. A year of daily observations is short for mixture estimation; constrained multistart optimization can still find local optima. No full CRSP delisting or membership database, historical stock-lending schedule, market-impact model, intraday execution model, factor-alpha regression or paper-style top-5/top-35/value-weighted portfolio is reconstructed. Paper~2's six overlapping monthly cohorts are also outside this Paper~1-based design. Threshold and family comparisons share observations and must not be interpreted as independent experiments.
+
+The numerical bounds are disclosed in source: $|\rho|\leq0.9999$, Student-$t$ degrees of freedom 2.01--200, Clayton parameter 0.001--200, positive Frank parameter 0.001--400, and Gumbel parameter 1--100. These accommodate the positive dependence of the specified pairs, not a general negatively dependent universe. Marginal AR/MA coefficients lie in $[-0.98,0.98]$ and GARCH persistence is below 0.999. Bounds, convergence metadata and complete fitted parameters are saved.
+
+\textbf{Conclusion.} In this implementation, a more flexible dependence model often fits formation returns better, but does not make the suggested pairs profitable. The PnL calculation, costs, sizing and out-of-sample timing are essential to that conclusion. Neither high correlation, a high winning-trade fraction, nor a dominant mixture-selection frequency substitutes for a positive funded trading outcome.
+
+\section{Reproducibility and references}
+The executed notebook contains the result tables, plots, source checks and a worked trade calculation. From the project root, after installing \texttt{requirements.txt}, run:
+\begin{quote}\small\ttfamily
+python scripts/download\_data.py\\
+python scripts/fit\_models.py --workers 4\\
+python scripts/run\_analysis.py\\
+python -m pytest -q\\
+python scripts/build\_figures.py\\
+python scripts/build\_notebook.py --execute\\
+python scripts/build\_report.py
+\end{quote}
+Compile \texttt{report/report.tex} twice with XeLaTeX. Existing verified local prices and fitted caches make the analysis reproducible without network access. A fresh provider download can change through vendor revisions; the manifest identifies the exact original inputs. Numerical tests cover copula differentiation and normalization, mixture nesting, marginal causality, state transitions, capital aggregation, next-close execution, fees, terminal liquidation, borrow charges and equity-based sizing.
+
+\begin{enumerate}
+\item Sabino da Silva, F.~A.~B., Ziegelmann, F.~A., and Caldeira, J.~F. \emph{Mixed Copula Pairs Trading Strategy on the S\&P 500}. Supplied 32-page working-paper PDF, \texttt{Mixed\_Copula\_Pairs\_Trading\_on\_the\_S\_P\_500.pdf}; accompanying cover identifies the 2017 working paper and a 2019 upload. The supplied version governs this reproduction.
+\item Rad, H., Low, R.~K.~Y., and Faff, R. (2016). \emph{The profitability of pairs trading strategies: distance, cointegration and copula methods}. \emph{Quantitative Finance}, 16(10), 1541--1558. \href{https://doi.org/10.1080/14697688.2016.1164337}{doi:10.1080/14697688.2016.1164337}. Supplied PDF: \texttt{2016\_QF\_PairsTrading.pdf}; \href{https://randlow.github.io/2016_QF_PairsTrading.pdf}{author-hosted copy}.
+\item Yahoo Finance, daily historical data for AAPL, GOOG, IBM, DIA and SPY; retrieved 26 September 2026 with yfinance. Per-series URLs, requests and hashes are in \texttt{data\_manifest.json}.
+\end{enumerate}
+\end{document}

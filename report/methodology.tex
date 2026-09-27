@@ -1,0 +1,195 @@
+\section{Research design and relation to the papers}
+
+The experiment reproduces the mixed-copula procedure of Sabino da Silva,
+Ziegelmann and Caldeira (Paper~1), with the marked-to-market capital conventions
+of Rad, Low and Faff (2016, Paper~2). All page references below denote physical
+pages of the supplied PDFs, including their cover pages. Paper~1 studies historical
+S\&P~500 constituents, allows mixtures to represent different dependence patterns,
+and uses six-month trading windows. Paper~2 compares distance, cointegration and
+single-copula strategies across the CRSP ordinary-share universe, emphasizing
+trading costs and capital denominators. Their different universes, models and
+portfolio construction make their empirical rankings distinct research findings,
+rather than contradictory predictions for these three pairs.
+
+\begin{table}[htbp]
+\centering
+\small
+\textbf{Reproduction map and declared adaptations.}\par\medskip
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.15\linewidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Component & Paper 1 & This experiment & Paper 2 \\
+\midrule
+Universe & Historical S\&P~500 members; 1990--2015 data & AAPL--GOOG, IBM--SPY, DIA--SPY; 2006--2025 evaluation & CRSP ordinary shares; 1962--2014 \\
+Windows & 12 months formation; 6 months trading; six-month advance & Same calendar lengths; January/July starts & Monthly starts with six overlapping portfolios \\
+Pair selection & Rank normalized-price SSD; portfolios of 5--35 pairs & Three prescribed pairs retained in fixed capital slots & SSD selection; 20 pairs; extra cointegration screen \\
+Dependence & Five single copulas and CFG/CtG mixtures; likelihood selection & Same seven candidates; BIC and best-single controls & Five single families, including survival Clayton/Gumbel; information criteria \\
+Marginals & ARMA--GARCH standardized residuals and empirical CDF & Four ARMA orders; Gaussian QMLE and AIC made explicit & Parametric distributions fitted to daily returns \\
+Execution and PnL & Same-day closing prices; committed/fully invested measures & Next-close execution; fixed units; monthly RCC/REC & Marked-to-market PnL; \$1 long-side denominator \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The data cutoff is December 2025, the final complete calendar year selected before
+model fitting. The first evaluation year is 2006, with the preceding year available
+for formation. Parameters are estimated using the preceding 12 calendar months
+and held fixed during each following six-month January--June or July--December
+window. This follows Paper~1's calendar construction (p.~6); Paper~2's six
+overlapping monthly cohorts are not implemented (p.~5). Each pair has an independent
+capital allocation, including the two uses of SPY. Positions and transaction costs
+are not netted across pairs. Cointegration rejections leave their allocation in cash.
+
+This is a methodological reproduction using the assignment's suggested pairs.
+It does not reconstruct historical index membership or the original SSD-ranked
+universe. The ETFs also fall outside Paper~2's ordinary-share restriction. Present-day
+pair selection, the later sample, and three dependent pair series limit conclusions
+about either original universe (Paper~1, p.~11; Paper~2, p.~5).
+
+\section{Marginal models, copulas and trading signals}
+
+\subsection{Formation-only estimation}
+
+For adjusted total-return marks $P_{j,t}$, define log returns
+$r_{j,t}=\log(P_{j,t}/P_{j,t-1})$. Sklar's representation separates marginal
+distributions from dependence:
+\begin{equation}
+ H(x,y)=C\{F_1(x),F_2(y)\},\qquad
+ f(x,y)=c\{F_1(x),F_2(y)\}f_1(x)f_2(y).
+\end{equation}
+Thus nonnormal marginal behavior can be modeled separately from joint tail
+behavior (Paper~1, pp.~7--8; Paper~2, p.~7).
+
+Each return series has an ARMA$(p,q)$--GARCH$(1,1)$ marginal, with
+$p,q\in\{0,1\}$:
+\begin{align}
+ r_t&=\mu+\phi(r_{t-1}-\mu)+\theta\epsilon_{t-1}+\epsilon_t,
+ &\epsilon_t&=\sigma_t z_t,\\
+ \sigma_t^2&=\omega+\alpha\epsilon_{t-1}^2+\beta\sigma_{t-1}^2.
+\end{align}
+Absent AR or MA terms have coefficient zero. Gaussian quasi-maximum likelihood
+estimates each candidate, and minimum AIC selects among the four orders.
+Paper~1 specifies the order range and residual transformation (pp.~9--10), but
+leaves this likelihood and order-selection convention open; they are explicit
+implementation choices. Positive variance and stationary variance-recursion
+constraints are imposed.
+
+The formation standardized residuals $\widehat z_t$ give pseudo-observations
+\begin{equation}
+ u_t=\frac{n}{n+1}\widehat F_n(\widehat z_t)
+     =\frac{\#\{s:\widehat z_s\leq\widehat z_t\}}{n+1}.
+\end{equation}
+During trading, coefficients and the empirical CDF remain frozen; observed returns
+update only the causal mean/variance recursion. Future residuals are mapped through
+that formation CDF and clipped to $[1/(n+1),n/(n+1)]$. Neither the CDF nor parameter
+selection uses future observations.
+
+The candidate set is Clayton, Frank, Gumbel, Gaussian, Student-$t$, and mixtures
+CFG and CtG. For components $k\in\{1,2,3\}$,
+\begin{equation}
+ C_{\mathrm{mix}}(u,v)=\sum_k\pi_k C_k(u,v;\vartheta_k),\qquad
+ (\widehat\pi,\widehat\vartheta)=\arg\max_{\pi,\vartheta}
+ \sum_{t\in\mathrm{formation}}\log\left[\sum_k\pi_k
+ c_k(u_t,v_t;\vartheta_k)\right],
+\end{equation}
+where $\pi_k\geq0$ and $\sum_k\pi_k=1$. CFG combines Clayton, Frank and Gumbel;
+CtG replaces Frank with Student-$t$ (Paper~1, p.~10). The logarithm applies to
+the weighted density sum, rather than to separate weighted log densities.
+The primary strategy chooses maximum unpenalized formation log likelihood, as
+in Paper~1 (p.~12). Because flexible mixtures have an in-sample advantage, minimum
+$\mathrm{BIC}=k\log n-2\ell$ and maximum likelihood restricted to the five single
+copulas provide controls. These are predetermined selection rules, not rankings
+chosen from trading-period profits.
+
+\subsection{Conditional ranks and position rules}
+
+Conditional distributions and accumulated flags are
+\begin{align}
+ h_{1,t}&=\frac{\partial C(u_t,v_t)}{\partial v},&
+ h_{2,t}&=\frac{\partial C(u_t,v_t)}{\partial u},\\
+ M_{j,t}&=M_{j,t-1}+h_{j,t}-\tfrac12,&M_{j,0}&=0.
+\end{align}
+Mixture conditionals are the same weighted sums of component conditionals.
+An extreme conditional rank identifies an unusual contemporaneous residual
+relative to its partner. It is not a calibrated probability of a future price
+reversal, and accumulating ranks does not establish stationarity.
+
+While flat, $M_1>0.2$ and $M_2<-0.2$ trigger short first/long second; the
+opposite inequalities trigger long first/short second. The primary exit occurs
+when \emph{either} flag reaches or crosses zero from its entry-side direction.
+This follows Paper~1's numbered step~5 (p.~11), although its preceding prose
+says both flags (p.~9). A separate sensitivity requires both flags to be on
+their converged sides simultaneously, consistent with Paper~2's wording
+(p.~8). Flags reset only at each six-month window's start. No same-signal-day
+exit/re-entry is allowed.
+
+Signals observed at close $t$ execute at close $t+1$; a new position earns no
+return before that execution. This is a declared departure from Paper~1's
+same-close assumption (p.~11). Outstanding positions are liquidated at the
+predefined final close, and terminal-date entries are suppressed.
+
+\subsection{Distance and cointegration controls}
+
+The distance control scales formation total-return indices to one and estimates
+their spread standard deviation. It rebases prices at trading start, enters at
+two formation standard deviations and exits at a zero crossing, following
+Paper~2 (p.~6). The cointegration control fits normalized second price on first,
+with an intercept, and applies an Engle--Granger test at 5\%, using AIC lag
+selection. Eligible pairs require positive $\beta$; the centered formation spread
+$P_2-\beta P_1$ is standardized and traded at $\pm2$ with zero-crossing exits.
+Below $-2$, the allocation is long $K$ of asset~2 and short $\beta K$ of asset~1;
+above $+2$, it is long $K$ of asset~1 and short $K/\beta$ of asset~2. This follows
+Paper~2's operational \emph{dollar} rule (p.~7), rather than treating $\beta$ as
+an invariant share ratio. Rejected pairs are not replaced from a larger universe.
+
+\section{PnL accounting, costs and capital}
+
+Let $K=\$100{,}000$ be the fixed long-side stake per pair. For long asset~1 and
+short asset~2 entered at close $e$,
+\begin{equation}
+ q_1=\frac{K}{P_{1,e}},\qquad q_2=-\frac{K}{P_{2,e}},\qquad
+ \mathrm{PnL}^{\mathrm{gross}}_t=
+ \sum_{j=1}^2q_{j,t-1}(P_{j,t}-P_{j,t-1}).
+\end{equation}
+Units remain fixed until exit. Equivalently, writing simple returns as $R_{j,t}$,
+\begin{equation}
+ \frac{\mathrm{PnL}^{\mathrm{gross}}_t}{K}
+ =\sum_j\underbrace{\frac{q_{j,t-1}P_{j,t-1}}{K}}_{w_{j,t-1}}
+ R_{j,t}.
+\end{equation}
+The weights drift with marked prices; holding them constantly at $+1,-1$
+would introduce daily rebalancing. Adjusted-price units are synthetic total-return
+units, so dividends are not separately credited. The equal-dollar pair starts
+with $2K$ gross exposure but has denominator $K$, matching Paper~2's convention
+(pp.~8--9); gross-exposure returns would be half as large initially. The three-slot
+portfolio commits $3K$. Idle cash earns zero, and profits are not reinvested into
+larger subsequent stakes.
+
+At each fill, proportional transaction cost and optional daily borrow cost are
+\begin{equation}
+ \mathrm{TC}_t=c\sum_j|\Delta q_{j,t}|P_{j,t},\qquad
+ \mathrm{BC}_t=\frac{b}{252}\sum_j\max(-q_{j,t-1},0)P_{j,t-1}.
+\end{equation}
+Net PnL subtracts both, including liquidation costs. The base $c=5$ basis
+points per leg per fill implies 20 basis points per complete equal-dollar pair
+at unchanged prices, matching Paper~1's round-trip benchmark (pp.~11--12).
+The fee grid is 0, 1, 5, 10, 14.5 and 20 basis points; borrow scenarios are
+0\%, 1\% and 3\% annually. These are scenarios, not reconstructed historical
+quotes. Paper~2 uses a historical commission/impact schedule (p.~8); the
+14.5-basis-point case corresponds to its stated recent 58-basis-point pair
+round trip only when notionals remain unchanged.
+
+For monthly pair return $r_{i,m}=\sum_{t\in m}\mathrm{PnL}^{\mathrm{net}}_{i,t}/K$,
+\begin{equation}
+ \mathrm{RCC}_m=\frac{\sum_{i=1}^3 r_{i,m}}{3},\qquad
+ \mathrm{REC}_m=\frac{\sum_{i=1}^3r_{i,m}}{n_m}.
+\end{equation}
+Here $n_m$ counts pairs held or traded during the month, including carry-in
+positions. REC is undefined when none trade; RCC is then zero. These adapt
+Paper~2's equations~(14)--(15), p.~8, to three nonoverlapping slots. PnL is
+recognized daily, including unrealized gains, rather than assigned wholly to
+exit months. REC is an activity-conditioned reporting measure; committed capital
+underlies the portfolio equity curve. Equity equals initial capital plus cumulative
+PnL, with no geometric compounding of fixed-stake returns.
+
+Accounting checks use hand-computed paths to verify execution lag, drifting
+weights, unchanged-price round-trip fees, forced liquidation, borrow charges,
+hedge-ratio timing, and equality of daily and completed-trade net PnL totals.

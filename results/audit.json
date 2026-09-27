@@ -1,0 +1,49 @@
+{
+  "start": "2006-01-03",
+  "end": "2025-12-31",
+  "windows": 40,
+  "pair_windows": 120,
+  "copula_fits": 840,
+  "marginal_fits": 200,
+  "input_rows_per_symbol": 5305,
+  "oos_days": 5031,
+  "max_trade_daily_pnl_reconciliation_error_dollars": 5.820766091346741e-11,
+  "all_marginals_converged": true,
+  "all_copula_models_success": true,
+  "minimum_baseline_equity_per_initial_dollar": -1.281420688634837,
+  "bootstrap_intervals": {
+    "Distance": {
+      "mean_monthly_difference_bps": -27.8216722132448,
+      "lower95_bps": -58.63976371630955,
+      "upper95_bps": 2.4402646585244554,
+      "reps": 5000,
+      "block_months": 6,
+      "seed": 2606
+    },
+    "Best-single": {
+      "mean_monthly_difference_bps": 5.752253619871678,
+      "lower95_bps": -2.9069156673856407,
+      "upper95_bps": 14.3585818838984,
+      "reps": 5000,
+      "block_months": 6,
+      "seed": 2606
+    },
+    "BIC": {
+      "mean_monthly_difference_bps": 6.270673556988567,
+      "lower95_bps": -2.087225104837899,
+      "upper95_bps": 15.23589534432644,
+      "reps": 5000,
+      "block_months": 6,
+      "seed": 2606
+    }
+  },
+  "design": {
+    "stake_per_pair": 100000,
+    "cost_bps_per_leg_fill": 5,
+    "lag_closes": 1,
+    "main_entry_threshold": 0.2,
+    "main_exit": "either",
+    "reset_flags": "window only",
+    "return_convention": "fixed initial long-side capital; arithmetic, not compounded"
+  }
+}
